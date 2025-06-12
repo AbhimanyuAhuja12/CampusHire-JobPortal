@@ -14,6 +14,7 @@ import authRoutes from "./routes/authRoutes"
 import jobRoutes from "./routes/jobRoutes"
 import adminRoutes from "./routes/adminRoutes"
 import userRoutes from "./routes/userRoutes"
+import applicationRoutes from "./routes/applicationRoutes"
 
 class App {
   public app: express.Application
@@ -89,6 +90,7 @@ class App {
     this.app.use("/api/jobs", jobRoutes)
     this.app.use("/api/admin", adminRoutes)
     this.app.use("/api/users", userRoutes)
+    this.app.use("/api/applications", applicationRoutes)
   }
 
   private initializeErrorHandling(): void {
