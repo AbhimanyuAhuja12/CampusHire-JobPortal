@@ -38,16 +38,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
-  useEffect(() => {
-    // Check for stored auth token
-    const token = localStorage.getItem("auth-token")
-    const userData = localStorage.getItem("user-data")
+  // useEffect(() => {
+  //   // Check for stored auth token
+  //   const token = localStorage.getItem("auth-token")
+  //   const userData = localStorage.getItem("user-data")
 
-    if (token && userData) {
-      setUser(JSON.parse(userData))
-    }
-    setLoading(false)
-  }, [])
+  //   if (token && userData) {
+  //     setUser(JSON.parse(userData))
+  //   }
+  //   setLoading(false)
+  // }, [])
 
   const login = async (email: string, password: string, role: UserRole) => {
     setLoading(true)
