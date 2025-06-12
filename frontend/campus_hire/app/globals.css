@@ -1,26 +1,208 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-background: 0 0% 100%;
+  --color-foreground: 222.2 84% 4.9%;
+  --color-card: 0 0% 100%;
+  --color-card-foreground: 222.2 84% 4.9%;
+  --color-popover: 0 0% 100%;
+  --color-popover-foreground: 222.2 84% 4.9%;
+  --color-primary: 221.2 83.2% 53.3%;
+  --color-primary-foreground: 210 40% 98%;
+  --color-secondary: 210 40% 96%;
+  --color-secondary-foreground: 222.2 84% 4.9%;
+  --color-muted: 210 40% 96%;
+  --color-muted-foreground: 215.4 16.3% 46.9%;
+  --color-accent: 210 40% 96%;
+  --color-accent-foreground: 222.2 84% 4.9%;
+  --color-destructive: 0 84.2% 60.2%;
+  --color-destructive-foreground: 210 40% 98%;
+  --color-border: 214.3 31.8% 91.4%;
+  --color-input: 214.3 31.8% 91.4%;
+  --color-ring: 221.2 83.2% 53.3%;
+  --color-chart-1: 12 76% 61%;
+  --color-chart-2: 173 58% 39%;
+  --color-chart-3: 197 37% 24%;
+  --color-chart-4: 43 74% 66%;
+  --color-chart-5: 27 87% 67%;
+  
+  --radius: 0.75rem;
+
+  /* Dark mode colors */
+  --color-background-dark: 222.2 84% 4.9%;
+  --color-foreground-dark: 210 40% 98%;
+  --color-card-dark: 222.2 84% 4.9%;
+  --color-card-foreground-dark: 210 40% 98%;
+  --color-popover-dark: 222.2 84% 4.9%;
+  --color-popover-foreground-dark: 210 40% 98%;
+  --color-primary-dark: 217.2 91.2% 59.8%;
+  --color-primary-foreground-dark: 222.2 84% 4.9%;
+  --color-secondary-dark: 217.2 32.6% 17.5%;
+  --color-secondary-foreground-dark: 210 40% 98%;
+  --color-muted-dark: 217.2 32.6% 17.5%;
+  --color-muted-foreground-dark: 215 20.2% 65.1%;
+  --color-accent-dark: 217.2 32.6% 17.5%;
+  --color-accent-foreground-dark: 210 40% 98%;
+  --color-destructive-dark: 0 62.8% 30.6%;
+  --color-destructive-foreground-dark: 210 40% 98%;
+  --color-border-dark: 217.2 32.6% 17.5%;
+  --color-input-dark: 217.2 32.6% 17.5%;
+  --color-ring-dark: 224.3 76.3% 94.1%;
+  --color-chart-1-dark: 220 70% 50%;
+  --color-chart-2-dark: 160 60% 45%;
+  --color-chart-3-dark: 30 80% 55%;
+  --color-chart-4-dark: 280 65% 60%;
+  --color-chart-5-dark: 340 75% 55%;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base styles */
+* {
+  border-color: hsl(var(--color-border));
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: hsl(var(--color-background));
+  color: hsl(var(--color-foreground));
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: var(--color-background-dark);
+    --color-foreground: var(--color-foreground-dark);
+    --color-card: var(--color-card-dark);
+    --color-card-foreground: var(--color-card-foreground-dark);
+    --color-popover: var(--color-popover-dark);
+    --color-popover-foreground: var(--color-popover-foreground-dark);
+    --color-primary: var(--color-primary-dark);
+    --color-primary-foreground: var(--color-primary-foreground-dark);
+    --color-secondary: var(--color-secondary-dark);
+    --color-secondary-foreground: var(--color-secondary-foreground-dark);
+    --color-muted: var(--color-muted-dark);
+    --color-muted-foreground: var(--color-muted-foreground-dark);
+    --color-accent: var(--color-accent-dark);
+    --color-accent-foreground: var(--color-accent-foreground-dark);
+    --color-destructive: var(--color-destructive-dark);
+    --color-destructive-foreground: var(--color-destructive-foreground-dark);
+    --color-border: var(--color-border-dark);
+    --color-input: var(--color-input-dark);
+    --color-ring: var(--color-ring-dark);
+    --color-chart-1: var(--color-chart-1-dark);
+    --color-chart-2: var(--color-chart-2-dark);
+    --color-chart-3: var(--color-chart-3-dark);
+    --color-chart-4: var(--color-chart-4-dark);
+    --color-chart-5: var(--color-chart-5-dark);
+  }
+}
+
+/* Dark class override (for manual dark mode toggle) */
+.dark {
+  --color-background: var(--color-background-dark);
+  --color-foreground: var(--color-foreground-dark);
+  --color-card: var(--color-card-dark);
+  --color-card-foreground: var(--color-card-foreground-dark);
+  --color-popover: var(--color-popover-dark);
+  --color-popover-foreground: var(--color-popover-foreground-dark);
+  --color-primary: var(--color-primary-dark);
+  --color-primary-foreground: var(--color-primary-foreground-dark);
+  --color-secondary: var(--color-secondary-dark);
+  --color-secondary-foreground: var(--color-secondary-foreground-dark);
+  --color-muted: var(--color-muted-dark);
+  --color-muted-foreground: var(--color-muted-foreground-dark);
+  --color-accent: var(--color-accent-dark);
+  --color-accent-foreground: var(--color-accent-foreground-dark);
+  --color-destructive: var(--color-destructive-dark);
+  --color-destructive-foreground: var(--color-destructive-foreground-dark);
+  --color-border: var(--color-border-dark);
+  --color-input: var(--color-input-dark);
+  --color-ring: var(--color-ring-dark);
+  --color-chart-1: var(--color-chart-1-dark);
+  --color-chart-2: var(--color-chart-2-dark);
+  --color-chart-3: var(--color-chart-3-dark);
+  --color-chart-4: var(--color-chart-4-dark);
+  --color-chart-5: var(--color-chart-5-dark);
+}
+
+/* Utility classes */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Smooth animations */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(to right, rgb(37 99 235), rgb(147 51 234));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* Gradient button hover effect */
+.gradient-button-hover {
+  background-size: 200% auto;
+  transition: background-position 0.5s ease;
+}
+
+.gradient-button-hover:hover {
+  background-position: right center;
+}
+
+/* Custom animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Responsive typography */
+@media (max-width: 640px) {
+  h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+  }
+  h2 {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+  }
 }
