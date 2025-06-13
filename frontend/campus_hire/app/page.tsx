@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { MainLayout } from "@/components/layout/main-layout"
-import { SectionHeading } from "@/components/ui/section-heading"
-import { FeatureCard } from "@/components/ui/feature-card"
-import { TestimonialCard } from "@/components/ui/testimonial-card"
-import { JobCard } from "@/components/ui/job-card"
-import Link from "next/link"
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { MainLayout } from "@/components/layout/main-layout";
+import { SectionHeading } from "@/components/ui/section-heading";
+import { FeatureCard } from "@/components/ui/feature-card";
+import { TestimonialCard } from "@/components/ui/testimonial-card";
+import { JobCard } from "@/components/ui/job-card";
+import Link from "next/link";
 import {
   Search,
   ArrowRight,
@@ -25,13 +25,13 @@ import {
   Rocket,
   Filter,
   MapPin,
-} from "lucide-react"
+} from "lucide-react";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 60 },
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.6 },
-}
+};
 
 const staggerContainer = {
   animate: {
@@ -39,37 +39,41 @@ const staggerContainer = {
       staggerChildren: 0.1,
     },
   },
-}
+};
 
 const stats = [
   { icon: Users, label: "Active Students", value: "10,000+" },
   { icon: Building2, label: "Partner Colleges", value: "500+" },
   { icon: Briefcase, label: "Job Opportunities", value: "5,000+" },
   { icon: Award, label: "Success Rate", value: "95%" },
-]
+];
 
 const features = [
   {
     icon: Target,
     title: "Smart Job Matching",
-    description: "AI-powered algorithm matches students with relevant opportunities based on skills and preferences.",
+    description:
+      "AI-powered algorithm matches students with relevant opportunities based on skills and preferences.",
   },
   {
     icon: Shield,
     title: "Verified Opportunities",
-    description: "All job postings are verified by college administrators ensuring quality and legitimacy.",
+    description:
+      "All job postings are verified by college administrators ensuring quality and legitimacy.",
   },
   {
     icon: Zap,
     title: "Instant Applications",
-    description: "Apply to multiple jobs with one click using your pre-filled profile and resume.",
+    description:
+      "Apply to multiple jobs with one click using your pre-filled profile and resume.",
   },
   {
     icon: Globe,
     title: "Global Reach",
-    description: "Connect with opportunities from companies worldwide, including remote positions.",
+    description:
+      "Connect with opportunities from companies worldwide, including remote positions.",
   },
-]
+];
 
 const testimonials = [
   {
@@ -84,17 +88,19 @@ const testimonials = [
     name: "Michael Chen",
     role: "Business Student",
     college: "Stanford University",
-    content: "The quality of opportunities on JobPortal is exceptional. I found my current role through this platform.",
+    content:
+      "The quality of opportunities on JobPortal is exceptional. I found my current role through this platform.",
     rating: 5,
   },
   {
     name: "Emily Davis",
     role: "Engineering Student",
     college: "UC Berkeley",
-    content: "Love how easy it is to track applications and get feedback. The interface is intuitive and modern.",
+    content:
+      "Love how easy it is to track applications and get feedback. The interface is intuitive and modern.",
     rating: 5,
   },
-]
+];
 
 const recentJobs = [
   {
@@ -118,7 +124,7 @@ const recentJobs = [
     type: "Part-time",
     salary: "$45/hour",
   },
-]
+];
 
 export default function LandingPage() {
   return (
@@ -151,8 +157,9 @@ export default function LandingPage() {
               </h1>
 
               <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto lg:mx-0">
-                The premier job portal connecting talented students with top employers. Discover opportunities, build
-                your future, and launch your career with confidence.
+                The premier job portal connecting talented students with top
+                employers. Discover opportunities, build your future, and launch
+                your career with confidence.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center lg:justify-start">
@@ -165,9 +172,19 @@ export default function LandingPage() {
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 py-3">
-                  Watch Demo
-                </Button>
+                <a
+                  href="https://www.loom.com/share/2e979a609cd4416a838f87e7c26545cd?sid=a4231bdd-bd42-4b77-a1e9-81fa91949596"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full sm:w-auto text-lg px-8 py-3 cursor-pointer"
+                  >
+                    Watch Demo
+                  </Button>
+                </a>
               </div>
 
               <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600 dark:text-gray-400 justify-center lg:justify-start">
@@ -202,7 +219,9 @@ export default function LandingPage() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <Search className="w-5 h-5 text-gray-400" />
-                    <span className="text-gray-600 dark:text-gray-300">Search for your dream job...</span>
+                    <span className="text-gray-600 dark:text-gray-300">
+                      Search for your dream job...
+                    </span>
                   </div>
 
                   {recentJobs.map((job, index) => (
@@ -214,16 +233,22 @@ export default function LandingPage() {
                       className="p-4 border rounded-lg hover:shadow-md transition-shadow"
                     >
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-gray-900 dark:text-white">{job.title}</h3>
+                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                          {job.title}
+                        </h3>
                         <Badge variant="secondary">{job.type}</Badge>
                       </div>
-                      <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">{job.company}</p>
+                      <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">
+                        {job.company}
+                      </p>
                       <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                         <div className="flex items-center gap-1">
                           <MapPin className="w-4 h-4" />
                           {job.location}
                         </div>
-                        <span className="font-medium text-green-600">{job.salary}</span>
+                        <span className="font-medium text-green-600">
+                          {job.salary}
+                        </span>
                       </div>
                     </motion.div>
                   ))}
@@ -257,12 +282,20 @@ export default function LandingPage() {
             className="grid grid-cols-2 lg:grid-cols-4 gap-8"
           >
             {stats.map((stat, index) => (
-              <motion.div key={index} variants={fadeInUp} className="text-center">
+              <motion.div
+                key={index}
+                variants={fadeInUp}
+                className="text-center"
+              >
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mb-4">
                   <stat.icon className="w-8 h-8 text-white" />
                 </div>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{stat.value}</div>
-                <div className="text-gray-600 dark:text-gray-300">{stat.label}</div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                  {stat.value}
+                </div>
+                <div className="text-gray-600 dark:text-gray-300">
+                  {stat.label}
+                </div>
               </motion.div>
             ))}
           </motion.div>
@@ -286,7 +319,11 @@ export default function LandingPage() {
           >
             {features.map((feature, index) => (
               <motion.div key={index} variants={fadeInUp}>
-                <FeatureCard icon={feature.icon} title={feature.title} description={feature.description} />
+                <FeatureCard
+                  icon={feature.icon}
+                  title={feature.title}
+                  description={feature.description}
+                />
               </motion.div>
             ))}
           </motion.div>
@@ -303,7 +340,10 @@ export default function LandingPage() {
 
           <div className="max-w-md mx-auto relative mb-12">
             <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-            <Input placeholder="Search jobs, companies, or skills..." className="pl-10 h-12 text-lg" />
+            <Input
+              placeholder="Search jobs, companies, or skills..."
+              className="pl-10 h-12 text-lg"
+            />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -385,16 +425,26 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Ready to Launch Your Career?</h2>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Ready to Launch Your Career?
+            </h2>
             <p className="text-xl text-blue-100 max-w-3xl mx-auto mb-8">
-              Join thousands of students who have already found their dream jobs. Your perfect opportunity is waiting
-              for you.
+              Join thousands of students who have already found their dream
+              jobs. Your perfect opportunity is waiting for you.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/auth">
-                <Button size="lg" variant="secondary" className="text-lg px-8 py-3">
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="text-lg px-8 py-3"
+                >
                   Get Started Free
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
@@ -413,5 +463,5 @@ export default function LandingPage() {
         </div>
       </section>
     </MainLayout>
-  )
+  );
 }
