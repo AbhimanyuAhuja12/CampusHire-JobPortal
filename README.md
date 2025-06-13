@@ -1,4 +1,6 @@
 # Job Portal Application
+[Watch the live demo on Loom](https://www.loom.com/share/2e979a609cd4416a838f87e7c26545cd?sid=a4231bdd-bd42-4b77-a1e9-81fa91949596)
+
 
 A full-stack job portal application that connects college students with job opportunities posted by college administrators. The application features user authentication, job posting, application management, and more.
 
