@@ -69,6 +69,17 @@ const jobListings = [
 const jobTypes = ["All", "Full-time", "Part-time", "Internship"]
 const locations = ["All", "Remote", "San Francisco, CA", "New York, NY", "Chicago, IL", "Austin, TX", "Seattle, WA"]
 
+interface Job {
+  id: number
+  title: string
+  company: string
+  location: string
+  type: string
+  salary: string
+  tags: string[]
+  postedDate: string
+}
+
 export default function JobsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -86,7 +97,7 @@ export default function JobsPage() {
     return matchesSearch && matchesType && matchesLocation
   })
 
-  const JobCard = ({ job }) => (
+  const JobCard = ({ job }: { job: Job }) => (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600">
       <div className="flex justify-between items-start mb-4">
         <div>
