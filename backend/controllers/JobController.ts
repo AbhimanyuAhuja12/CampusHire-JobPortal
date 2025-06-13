@@ -1,119 +1,165 @@
-import type { Request, Response } from "express"
+import type { Request, Response, NextFunction } from "express"
 import { JobService } from "../services/JobService"
-import { ApiResponse } from "../utils/httpStatusCodes"
-import { asyncHandler } from "../middleware/errorHandler"
-import type { AuthRequest } from "../middleware/auth"
+import { createError } from "../middleware/errorHandler"
+import { StatusCodes } from "../utils/httpStatusCodes"
 import { logger } from "../utils/logger"
 
+// export interface User {
+//   id: string;
+//   name: string;
+//   email: string;
+//   role: "student" | "admin";
+//   college: string;
+//   isApproved?: boolean;
+// }
 export class JobController {
-  static createJob = asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { title, description, requirements, location, job_type, salary_range, deadline } = req.body
+  static async createJob(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user?.id;
 
-    // Validation
-    if (!title || !description || !location || !job_type || !deadline) {
-      return ApiResponse.badRequest(res, "Title, description, location, job type, and deadline are required")
+      const jobData = req.body
+
+      if (!userId) {
+        return next(createError("Unauthorized", StatusCodes.UNAUTHORIZED))
+      }
+
+      // Ensure college is set from the admin's college
+      jobData.college = (req as any).user?.college;
+
+
+      const job = await JobService.create(jobData, userId)
+
+      logger.info(`Job created: ${job.title} by user ${userId}`)
+
+      res.status(StatusCodes.CREATED).json({
+        success: true,
+        message: "Job created successfully",
+        data: { job },
+      })
+    } catch (error) {
+      next(error)
     }
+  }
 
-    const jobData = {
-      title,
-      description,
-      requirements,
-      location,
-      job_type,
-      salary_range,
-      deadline,
-      college: req.user.college,
+  static async getJobs(req: Request, res: Response, next: NextFunction) {
+    try {
+      const filters = {
+        search: req.query.search as string,
+        location: req.query.location as string,
+        job_type: req.query.job_type as string,
+        college: req.query.college as string,
+        status: req.query.status as string,
+        page: req.query.page ? Number.parseInt(req.query.page as string) : 1,
+        limit: req.query.limit ? Number.parseInt(req.query.limit as string) : 10,
+      }
+
+      // Log the filters for debugging
+      logger.info(`Getting jobs with filters: ${JSON.stringify(filters)}`)
+
+      const result = await JobService.findAll(filters)
+
+      res.status(StatusCodes.OK).json({
+        success: true,
+        message: "Jobs retrieved successfully",
+        data: result,
+      })
+    } catch (error) {
+      next(error)
     }
+  }
 
-    const job = await JobService.create(jobData, req.user.id)
+  static async getJobById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const jobId = Number.parseInt(req.params.id)
+      const job = await JobService.findById(jobId)
 
-    logger.info(`New job created: ${job.title} by ${req.user.email}`)
+      if (!job) {
+        return next(createError("Job not found", StatusCodes.NOT_FOUND))
+      }
 
-    return ApiResponse.created(res, { job }, "Job created successfully")
-  })
-
-  static getJobs = asyncHandler(async (req: Request, res: Response) => {
-    const filters = {
-      search: req.query.search as string,
-      location: req.query.location as string,
-      job_type: req.query.job_type as string,
-      college: req.query.college as string,
-      status: req.query.status as string,
-      page: Number.parseInt(req.query.page as string) || 1,
-      limit: Number.parseInt(req.query.limit as string) || 10,
+      res.status(StatusCodes.OK).json({
+        success: true,
+        message: "Job retrieved successfully",
+        data: { job },
+      })
+    } catch (error) {
+      next(error)
     }
+  }
 
-    const result = await JobService.findAll(filters)
+  static async updateJob(req: Request, res: Response, next: NextFunction) {
+    try {
+      const jobId = Number.parseInt(req.params.id)
+      const userId = (req as any).user?.id;
 
-    return ApiResponse.success(res, result, "Jobs retrieved successfully")
-  })
+      if (!userId) {
+        return next(createError("Unauthorized", StatusCodes.UNAUTHORIZED))
+      }
 
-  static getJobById = asyncHandler(async (req: Request, res: Response) => {
-    const jobId = Number.parseInt(req.params.id)
+      const job = await JobService.update(jobId, req.body, userId)
 
-    if (isNaN(jobId)) {
-      return ApiResponse.badRequest(res, "Invalid job ID")
+      res.status(StatusCodes.OK).json({
+        success: true,
+        message: "Job updated successfully",
+        data: { job },
+      })
+    } catch (error) {
+      next(error)
     }
+  }
 
-    const job = await JobService.findById(jobId)
+  static async deleteJob(req: Request, res: Response, next: NextFunction) {
+    try {
+      const jobId = Number.parseInt(req.params.id)
+      const userId = (req as any).user?.id;
 
-    if (!job) {
-      return ApiResponse.notFound(res, "Job not found")
+      if (!userId) {
+        return next(createError("Unauthorized", StatusCodes.UNAUTHORIZED))
+      }
+
+      await JobService.delete(jobId, userId)
+
+      res.status(StatusCodes.OK).json({
+        success: true,
+        message: "Job deleted successfully",
+      })
+    } catch (error) {
+      next(error)
     }
+  }
 
-    return ApiResponse.success(res, { job }, "Job retrieved successfully")
-  })
+  static async getMyJobs(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user?.id;
 
-  static updateJob = asyncHandler(async (req: AuthRequest, res: Response) => {
-    const jobId = Number.parseInt(req.params.id)
+      if (!userId) {
+        return next(createError("Unauthorized", StatusCodes.UNAUTHORIZED))
+      }
 
-    if (isNaN(jobId)) {
-      return ApiResponse.badRequest(res, "Invalid job ID")
+      const jobs = await JobService.getJobsByUser(userId)
+
+      res.status(StatusCodes.OK).json({
+        success: true,
+        message: "Jobs retrieved successfully",
+        data: { jobs },
+      })
+    } catch (error) {
+      next(error)
     }
+  }
 
-    const { title, description, requirements, location, job_type, salary_range, deadline, status } = req.body
+  static async getJobStats(req: Request, res: Response, next: NextFunction) {
+    try {
+      const college = (req as any).user?.role === "admin" ? (req as any).user.college : undefined
+      const stats = await JobService.getStats(college)
 
-    const updateData: any = {}
-    if (title) updateData.title = title
-    if (description) updateData.description = description
-    if (requirements !== undefined) updateData.requirements = requirements
-    if (location) updateData.location = location
-    if (job_type) updateData.job_type = job_type
-    if (salary_range !== undefined) updateData.salary_range = salary_range
-    if (deadline) updateData.deadline = deadline
-    if (status) updateData.status = status
-
-    const updatedJob = await JobService.update(jobId, updateData, req.user.id)
-
-    logger.info(`Job updated: ${updatedJob.title} by ${req.user.email}`)
-
-    return ApiResponse.success(res, { job: updatedJob }, "Job updated successfully")
-  })
-
-  static deleteJob = asyncHandler(async (req: AuthRequest, res: Response) => {
-    const jobId = Number.parseInt(req.params.id)
-
-    if (isNaN(jobId)) {
-      return ApiResponse.badRequest(res, "Invalid job ID")
+      res.status(StatusCodes.OK).json({
+        success: true,
+        message: "Job stats retrieved successfully",
+        data: { stats },
+      })
+    } catch (error) {
+      next(error)
     }
-
-    await JobService.delete(jobId, req.user.id)
-
-    logger.info(`Job deleted: ID ${jobId} by ${req.user.email}`)
-
-    return ApiResponse.success(res, null, "Job deleted successfully")
-  })
-
-  static getMyJobs = asyncHandler(async (req: AuthRequest, res: Response) => {
-    const jobs = await JobService.getJobsByUser(req.user.id)
-
-    return ApiResponse.success(res, { jobs }, "Your jobs retrieved successfully")
-  })
-
-  static getJobStats = asyncHandler(async (req: AuthRequest, res: Response) => {
-    const college = req.user.role === "admin" ? req.user.college : undefined
-    const stats = await JobService.getStats(college)
-
-    return ApiResponse.success(res, { stats }, "Job statistics retrieved successfully")
-  })
+  }
 }

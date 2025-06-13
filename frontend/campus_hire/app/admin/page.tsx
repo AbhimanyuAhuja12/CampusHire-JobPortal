@@ -21,7 +21,19 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -39,6 +51,9 @@ import {
   Edit,
   Trash2,
 } from "lucide-react"
+
+// Add imports for shimmer components
+import { ShimmerJobCard, ShimmerTableRow } from "@/components/ui/shimmer-card"
 
 interface Job {
   id: string
@@ -79,8 +94,21 @@ export default function AdminDashboard() {
   const [pendingStudents, setPendingStudents] = useState<PendingStudent[]>([])
   const [applications, setApplications] = useState<Application[]>([])
   const [isJobDialogOpen, setIsJobDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const [currentJob, setCurrentJob] = useState<Job | null>(null)
+  const [jobFormData, setJobFormData] = useState({
+    title: "",
+    description: "",
+    location: "",
+    deadline: "",
+    requirements: "",
+    job_type: "full-time",
+    salary_range: "",
+    status: "active",
+  })
 
   useEffect(() => {
     if (!user || user.role !== "admin") {
@@ -103,6 +131,7 @@ export default function AdminDashboard() {
   const fetchJobs = async () => {
     try {
       const response = await apiCall("/jobs/admin/my-jobs")
+      console.log("Admin jobs:", response.data)
       setJobs(response.data.jobs || [])
     } catch (error: any) {
       console.error("Failed to fetch jobs:", error)
@@ -168,6 +197,72 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleEditJob = (job: Job) => {
+    setCurrentJob(job)
+    setJobFormData({
+      title: job.title,
+      description: job.description,
+      location: job.location,
+      deadline: job.deadline.split("T")[0], // Format date for input
+      requirements: job.requirements,
+      job_type: job.job_type,
+      salary_range: job.salary_range || "",
+      status: job.status,
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  const handleUpdateJob = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!currentJob) return
+
+    setSubmitting(true)
+    try {
+      await apiCall(`/jobs/${currentJob.id}`, {
+        method: "PUT",
+        body: JSON.stringify(jobFormData),
+      })
+
+      setIsEditDialogOpen(false)
+      fetchJobs()
+      toast({
+        title: "Job updated successfully!",
+        description: "Your changes have been saved.",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Failed to update job",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDeleteJob = async (jobId: string) => {
+    setDeleting(jobId)
+    try {
+      await apiCall(`/jobs/${jobId}`, {
+        method: "DELETE",
+      })
+
+      setJobs(jobs.filter((job) => job.id !== jobId))
+      toast({
+        title: "Job deleted",
+        description: "The job has been permanently deleted.",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Failed to delete job",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      })
+    } finally {
+      setDeleting(null)
+    }
+  }
+
   const handleApproveStudent = async (studentId: string) => {
     try {
       await apiCall(`/admin/approve-student/${studentId}`, {
@@ -208,6 +303,10 @@ export default function AdminDashboard() {
         variant: "destructive",
       })
     }
+  }
+
+  const getJobApplications = (jobId: string) => {
+    return applications.filter((app) => app.job_id === jobId)
   }
 
   const stats = {
@@ -344,6 +443,7 @@ export default function AdminDashboard() {
                         placeholder="Describe the role and responsibilities..."
                         rows={4}
                         required
+                        className="bg-background text-foreground"
                       />
                     </div>
                     <div className="grid gap-4 md:grid-cols-2">
@@ -405,9 +505,130 @@ export default function AdminDashboard() {
               </Dialog>
             </div>
 
+            {/* Edit Job Dialog */}
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Edit Job</DialogTitle>
+                  <DialogDescription>Update job details</DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleUpdateJob} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-title">Job Title</Label>
+                    <Input
+                      id="edit-title"
+                      value={jobFormData.title}
+                      onChange={(e) => setJobFormData({ ...jobFormData, title: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-description">Description</Label>
+                    <Textarea
+                      id="edit-description"
+                      value={jobFormData.description}
+                      onChange={(e) => setJobFormData({ ...jobFormData, description: e.target.value })}
+                      rows={4}
+                      required
+                      className="bg-background text-foreground"
+                    />
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-location">Location</Label>
+                      <Input
+                        id="edit-location"
+                        value={jobFormData.location}
+                        onChange={(e) => setJobFormData({ ...jobFormData, location: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-deadline">Application Deadline</Label>
+                      <Input
+                        id="edit-deadline"
+                        type="date"
+                        value={jobFormData.deadline}
+                        onChange={(e) => setJobFormData({ ...jobFormData, deadline: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-job_type">Job Type</Label>
+                      <select
+                        id="edit-job_type"
+                        value={jobFormData.job_type}
+                        onChange={(e) => setJobFormData({ ...jobFormData, job_type: e.target.value })}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                        required
+                      >
+                        <option value="full-time">Full-time</option>
+                        <option value="part-time">Part-time</option>
+                        <option value="internship">Internship</option>
+                        <option value="contract">Contract</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-salary_range">Salary Range (Optional)</Label>
+                      <Input
+                        id="edit-salary_range"
+                        value={jobFormData.salary_range}
+                        onChange={(e) => setJobFormData({ ...jobFormData, salary_range: e.target.value })}
+                        placeholder="e.g. $50,000 - $70,000"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-requirements">Requirements (comma-separated)</Label>
+                    <Input
+                      id="edit-requirements"
+                      value={jobFormData.requirements}
+                      onChange={(e) => setJobFormData({ ...jobFormData, requirements: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-status">Status</Label>
+                    <select
+                      id="edit-status"
+                      value={jobFormData.status}
+                      onChange={(e) => setJobFormData({ ...jobFormData, status: e.target.value as any })}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      required
+                    >
+                      <option value="active">Active</option>
+                      <option value="closed">Closed</option>
+                      <option value="draft">Draft</option>
+                    </select>
+                  </div>
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={submitting}>
+                      {submitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Updating...
+                        </>
+                      ) : (
+                        "Save Changes"
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+
             {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin" />
+              <div className="grid gap-6">
+                {Array(3)
+                  .fill(0)
+                  .map((_, i) => (
+                    <ShimmerJobCard key={i} />
+                  ))}
               </div>
             ) : (
               <div className="grid gap-6">
@@ -448,20 +669,59 @@ export default function AdminDashboard() {
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline">{job.job_type}</Badge>
+                            {getJobApplications(job.id).length > 0 && (
+                              <Badge variant="secondary">
+                                {getJobApplications(job.id).length} application
+                                {getJobApplications(job.id).length !== 1 ? "s" : ""}
+                              </Badge>
+                            )}
                           </div>
                         </div>
 
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="flex items-center gap-2">
-                            <Eye className="w-4 h-4" />
-                            View Applications
-                          </Button>
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-2"
+                            onClick={() => handleEditJob(job)}
+                          >
                             <Edit className="w-4 h-4" />
+                            Edit
                           </Button>
-                          <Button variant="outline" size="sm">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                                <Trash2 className="w-4 h-4" />
+                                Delete
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the job posting and remove
+                                  all associated applications.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteJob(job.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  {deleting === job.id ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Deleting...
+                                    </>
+                                  ) : (
+                                    "Delete"
+                                  )}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </CardContent>
                     </Card>
@@ -485,67 +745,77 @@ export default function AdminDashboard() {
             </div>
 
             <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Student</TableHead>
-                    <TableHead>Job Title</TableHead>
-                    <TableHead>Applied Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {applications.map((application) => (
-                    <TableRow key={application.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{application.user_name}</div>
-                          <div className="text-sm text-muted-foreground">{application.user_email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">{application.job_title}</TableCell>
-                      <TableCell>{new Date(application.applied_at).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            application.status === "accepted"
-                              ? "default"
-                              : application.status === "rejected"
-                                ? "destructive"
-                                : "secondary"
-                          }
-                        >
-                          {application.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {application.status === "pending" && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleApplicationAction(application.id, "accepted")}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleApplicationAction(application.id, "rejected")}
-                            >
-                              Reject
-                            </Button>
-                          </div>
-                        )}
-                      </TableCell>
+              {loading ? (
+                <div className="p-2">
+                  {Array(5)
+                    .fill(0)
+                    .map((_, i) => (
+                      <ShimmerTableRow key={i} />
+                    ))}
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Job Title</TableHead>
+                      <TableHead>Applied Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {applications.map((application) => (
+                      <TableRow key={application.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{application.user_name}</div>
+                            <div className="text-sm text-muted-foreground">{application.user_email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">{application.job_title}</TableCell>
+                        <TableCell>{new Date(application.applied_at).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              application.status === "accepted"
+                                ? "default"
+                                : application.status === "rejected"
+                                  ? "destructive"
+                                  : "secondary"
+                            }
+                          >
+                            {application.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {application.status === "pending" && (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleApplicationAction(application.id, "accepted")}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                Accept
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleApplicationAction(application.id, "rejected")}
+                              >
+                                Reject
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </Card>
 
-            {applications.length === 0 && (
+            {!loading && applications.length === 0 && (
               <div className="text-center py-12">
                 <Eye className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No applications yet</h3>
@@ -565,108 +835,74 @@ export default function AdminDashboard() {
             </div>
 
             <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>College</TableHead>
-                    <TableHead>Registered</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingStudents.map((student) => (
-                    <TableRow key={student.id}>
-                      <TableCell className="font-medium">{student.name}</TableCell>
-                      <TableCell>{student.email}</TableCell>
-                      <TableCell>{student.college}</TableCell>
-                      <TableCell>{new Date(student.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          onClick={() => handleApproveStudent(student.id)}
-                          className="flex items-center gap-2"
-                        >
-                          <UserCheck className="w-4 h-4" />
-                          Approve
-                        </Button>
-                      </TableCell>
+              {loading ? (
+                <div className="p-2">
+                  {Array(3)
+                    .fill(0)
+                    .map((_, i) => (
+                      <ShimmerTableRow key={i} />
+                    ))}
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>College</TableHead>
+                      <TableHead>Registered On</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingStudents.map((student) => (
+                      <TableRow key={student.id}>
+                        <TableCell className="font-medium">{student.name}</TableCell>
+                        <TableCell>{student.email}</TableCell>
+                        <TableCell>{student.college}</TableCell>
+                        <TableCell>{new Date(student.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            onClick={() => handleApproveStudent(student.id)}
+                            className="flex items-center gap-2"
+                          >
+                            <UserCheck className="w-4 h-4" />
+                            Approve
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </Card>
 
-            {pendingStudents.length === 0 && (
+            {!loading && pendingStudents.length === 0 && (
               <div className="text-center py-12">
                 <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No pending approvals</h3>
-                <p className="text-gray-600 dark:text-gray-300">All students have been approved</p>
+                <p className="text-gray-600 dark:text-gray-300">All student accounts have been approved</p>
               </div>
             )}
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Job Performance</CardTitle>
-                  <CardDescription>Applications per job posting</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {jobs.slice(0, 5).map((job) => {
-                      const jobApplications = applications.filter((app) => app.job_title === job.title).length
-                      return (
-                        <div key={job.id} className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">{job.title}</p>
-                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
-                              <div
-                                className="bg-blue-600 h-2 rounded-full"
-                                style={{ width: `${Math.min((jobApplications / 20) * 100, 100)}%` }}
-                              />
-                            </div>
-                          </div>
-                          <span className="text-sm font-medium ml-4">{jobApplications}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                  <CardDescription>Latest actions and updates</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {applications.slice(0, 5).map((app, index) => (
-                      <div key={app.id} className="flex items-center gap-3">
-                        <div
-                          className={`w-2 h-2 rounded-full ${
-                            app.status === "accepted"
-                              ? "bg-green-500"
-                              : app.status === "rejected"
-                                ? "bg-red-500"
-                                : "bg-blue-500"
-                          }`}
-                        />
-                        <div className="flex-1">
-                          <p className="text-sm">New application for {app.job_title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(app.applied_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Job Portal Analytics</CardTitle>
+                <CardDescription>Overview of your job portal activity</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Analytics Coming Soon</h3>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Detailed analytics and reporting features will be available soon
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

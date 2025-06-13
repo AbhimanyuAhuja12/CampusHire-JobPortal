@@ -5,13 +5,14 @@ import { motion } from "framer-motion"
 import { useAuth, apiCall } from "@/components/auth-provider"
 import { redirect } from "next/navigation"
 import { Navbar } from "@/components/layout/navbar"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import {
   MapPin,
@@ -26,7 +27,9 @@ import {
   User,
   History,
   Loader2,
+  Save,
 } from "lucide-react"
+import { ShimmerJobCard, ShimmerApplicationCard } from "@/components/ui/shimmer-card"
 
 interface Job {
   id: string
@@ -57,6 +60,13 @@ export default function StudentDashboard() {
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState<string | null>(null)
+  const [updatingProfile, setUpdatingProfile] = useState(false)
+  const [profileData, setProfileData] = useState({
+    name: "",
+    email: "",
+    bio: "",
+    skills: "",
+  })
 
   useEffect(() => {
     if (!user || user.role !== "student") {
@@ -64,14 +74,36 @@ export default function StudentDashboard() {
     } else {
       fetchJobs()
       fetchApplications()
+
+      // Initialize profile data
+      if (user) {
+        setProfileData({
+          name: user.name || "",
+          email: user.email || "",
+          bio: user.bio || "",
+          skills: user.skills || "",
+        })
+      }
     }
   }, [user])
 
   const fetchJobs = async () => {
     try {
-      const response = await apiCall(`/jobs?college=${encodeURIComponent(user?.college || "")}`)
-      setJobs(response.data.jobs || [])
+      console.log("Fetching jobs for college:", user?.college)
+
+      // Use a simpler query first to debug
+      const response = await apiCall(`/jobs?status=active`)
+      console.log("Jobs response:", response)
+
+      // Filter jobs by college on the client side as a fallback
+      let jobsList = response.data.jobs || []
+      if (user?.college) {
+        jobsList = jobsList.filter((job) => job.college === user.college)
+      }
+
+      setJobs(jobsList)
     } catch (error: any) {
+      console.error("Error fetching jobs:", error)
       toast({
         title: "Error",
         description: error.message || "Failed to fetch jobs",
@@ -118,9 +150,6 @@ export default function StudentDashboard() {
 
       // Refresh applications
       fetchApplications()
-
-      // Update jobs to reflect application status
-      setJobs(jobs.map((job) => (job.id === jobId ? { ...job, applied: true } : job)))
     } catch (error: any) {
       toast({
         title: "Application failed",
@@ -132,11 +161,34 @@ export default function StudentDashboard() {
     }
   }
 
+  const handleProfileUpdate = async () => {
+    setUpdatingProfile(true)
+    try {
+      await apiCall("/users/profile", {
+        method: "PUT",
+        body: JSON.stringify(profileData),
+      })
+
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully.",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Update failed",
+        description: error.message || "Failed to update profile",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingProfile(false)
+    }
+  }
+
   const filteredJobs = jobs.filter(
     (job) =>
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.posted_by_name.toLowerCase().includes(searchTerm.toLowerCase()),
+      job.posted_by_name?.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   const getStatusIcon = (status: string) => {
@@ -236,8 +288,12 @@ export default function StudentDashboard() {
             </div>
 
             {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin" />
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {Array(6)
+                  .fill(0)
+                  .map((_, i) => (
+                    <ShimmerJobCard key={i} />
+                  ))}
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -254,7 +310,7 @@ export default function StudentDashboard() {
                           <div>
                             <CardTitle className="text-lg">{job.title}</CardTitle>
                             <CardDescription className="text-sm text-muted-foreground">
-                              {job.posted_by_name}
+                              {job.posted_by_name || "College Admin"}
                             </CardDescription>
                           </div>
                           {isJobApplied(job.id) && (
@@ -328,37 +384,47 @@ export default function StudentDashboard() {
           </TabsContent>
 
           <TabsContent value="applications" className="space-y-6">
-            <div className="grid gap-4">
-              {applications.map((application, index) => (
-                <motion.div
-                  key={application.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Card>
-                    <CardContent className="flex items-center justify-between p-6">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(application.status)}
-                          <div>
-                            <h3 className="font-medium">{application.job_title}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Applied on {new Date(application.applied_at).toLocaleDateString()}
-                            </p>
+            {loading ? (
+              <div className="grid gap-4">
+                {Array(3)
+                  .fill(0)
+                  .map((_, i) => (
+                    <ShimmerApplicationCard key={i} />
+                  ))}
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {applications.map((application, index) => (
+                  <motion.div
+                    key={application.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <Card>
+                      <CardContent className="flex items-center justify-between p-6">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2">
+                            {getStatusIcon(application.status)}
+                            <div>
+                              <h3 className="font-medium">{application.job_title}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                Applied on {new Date(application.applied_at).toLocaleDateString()}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <Badge className={getStatusColor(application.status)}>
-                        {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
-                      </Badge>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
+                        <Badge className={getStatusColor(application.status)}>
+                          {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
 
-            {applications.length === 0 && (
+            {!loading && applications.length === 0 && (
               <div className="text-center py-12">
                 <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No applications yet</h3>
@@ -378,7 +444,6 @@ export default function StudentDashboard() {
               <CardContent className="space-y-6">
                 <div className="flex items-center gap-4">
                   <Avatar className="w-20 h-20">
-                    <AvatarImage src="/placeholder.svg" alt={user.name} />
                     <AvatarFallback className="text-lg">
                       {user.name
                         .split(" ")
@@ -393,11 +458,39 @@ export default function StudentDashboard() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" defaultValue={user.name} />
+                    <Input
+                      id="name"
+                      value={profileData.name}
+                      onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" defaultValue={user.email} />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profileData.email}
+                      onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="bio">Bio</Label>
+                    <Textarea
+                      id="bio"
+                      placeholder="Tell us about yourself"
+                      value={profileData.bio}
+                      onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                      className="bg-background text-foreground"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="skills">Skills (comma separated)</Label>
+                    <Input
+                      id="skills"
+                      placeholder="e.g. JavaScript, React, Node.js"
+                      value={profileData.skills}
+                      onChange={(e) => setProfileData({ ...profileData, skills: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="college">College</Label>
@@ -408,9 +501,22 @@ export default function StudentDashboard() {
                     <Input id="role" defaultValue={user.role} disabled />
                   </div>
                 </div>
-
-                <Button>Save Changes</Button>
               </CardContent>
+              <CardFooter>
+                <Button onClick={handleProfileUpdate} disabled={updatingProfile} className="flex items-center gap-2">
+                  {updatingProfile ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+              </CardFooter>
             </Card>
           </TabsContent>
         </Tabs>
